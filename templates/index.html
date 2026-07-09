@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wendy Zhou — Personal AI Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<!-- Prism syntax highlighting — VS Code Dark+ theme (matches your editor exactly) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ LEFT SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+      <div>
+        <div class="brand-name">Wendy Zhou</div>
+        <div class="brand-sub">Personal AI Assistant</div>
+      </div>
+      <button class="nav-toggle" id="navToggle" title="Hide / show chat history" aria-label="Toggle chat history">☰</button>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">
+        <span class="nav-ico">▦</span> Dashboard
+      </button>
+      <button class="nav-item" data-view="chat">
+        <span class="nav-ico">◈</span> Chat
+      </button>
+      <button class="nav-item" data-view="work">
+        <span class="nav-ico">⚙</span> Ongoing Work
+      </button>
+      <button class="nav-item" data-view="calendar">
+        <span class="nav-ico">▤</span> Calendar
+      </button>
+      <button class="nav-item" data-view="memories">
+        <span class="nav-ico">✦</span> Memories
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <span id="agentDot" class="dot"></span>
+      <span id="agentStatus">Checking agent…</span>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN STAGE ============ -->
+  <main class="stage">
+
+    <!-- ===== DASHBOARD VIEW ===== -->
+    <section class="view" id="view-dashboard">
+      <header class="page-head">
+        <div class="page-date" id="dashDate">—</div>
+        <h1 class="page-title"><span id="dashGreeting">Hello</span> <span class="wave">👋</span></h1>
+        <p class="page-intro">
+          I'm Wendy Zhou, your personal AI assistant. I specialise in mechanical
+          engineering, mathematics, analytics, and coding. I also help with daily
+          tasks like summarising email, weekly news digests, managing to-dos, and
+          spotting market trends.
+        </p>
+        <div class="rule"></div>
+      </header>
+
+      <div class="grid">
+        <!-- Quick Chat box -->
+        <article class="card card-chat">
+          <div class="card-eyebrow">◈ Quick chat</div>
+          <div class="qc-scroll" id="qcScroll">
+            <div class="qc-empty">No messages yet — ask something below.</div>
+          </div>
+          <div class="quote-bar" id="qcQuote"></div>
+          <div class="img-preview" id="qcPreview"></div>
+          <form class="qc-form" id="qcForm">
+            <button class="attach-btn" type="button" id="qcAttach" aria-label="Attach a file" title="Attach an image, PDF, Word, Excel, text, or audio/video file">📎</button>
+            <input id="qcFile" class="file-hidden" type="file" accept="image/*,application/pdf,.pdf,.docx,.xlsx,.csv,.txt,.md,audio/*,.mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm" multiple>
+            <textarea id="qcInput" class="qc-input" placeholder="Ask me anything…" autocomplete="off" rows="1"></textarea>
+            <button class="qc-send" type="submit" aria-label="Send">→</button>
+          </form>
+        </article>
+
+        <!-- Weekly news -->
+        <article class="card">
+          <div class="card-eyebrow">◷ Weekly news</div>
+          <div class="news-container" id="newsContainer">
+            <div class="news-loading">Loading news…</div>
+          </div>
+        </article>
+
+        <!-- Email summary -->
+        <article class="card">
+          <div class="card-eyebrow">✉ Email summary</div>
+          <span class="tag">Needs Gmail</span>
+          <p class="card-body">I'll summarise your unread Gmail each morning and
+          flag urgent items so you never miss a deadline.</p>
+        </article>
+
+        <!-- Weather -->
+        <article class="card">
+          <div class="card-eyebrow">☀ Weather</div>
+          <div class="weather-container" id="weatherContainer">
+            <div class="news-loading">Loading weather…</div>
+          </div>
+        </article>
+
+        <!-- Today's tasks — standalone to-do list stored in Wendy's own DB (no Calendar/OAuth needed) -->
+        <article class="card card-todo">
+          <div class="card-eyebrow">✓ Recent tasks</div>
+          <form class="todo-form" id="todoForm">
+            <input id="todoInput" class="todo-input" type="text" placeholder="Add a task…" autocomplete="off">
+            <button class="todo-add" type="submit" aria-label="Add task" title="Add task">+</button>
+          </form>
+          <div class="todo-list" id="todoList">
+            <div class="news-loading">Loading tasks…</div>
+          </div>
+        </article>
+
+        <!-- Market trends -->
+        <article class="card">
+          <div class="card-eyebrow">📈 Market watch</div>
+          <div class="stocks-container" id="stocksContainer">
+            <div class="news-loading">Loading stocks…</div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Daily Briefing — full-width, at the bottom -->
+      <article class="card card-briefing" id="briefingCard">
+        <div class="briefing-head">
+          <div class="card-eyebrow">✦ Daily briefing</div>
+          <button class="briefing-refresh" id="briefingRefresh" title="Regenerate now">↻ Refresh</button>
+        </div>
+        <div class="briefing-body md" id="briefingBody">
+          <div class="news-loading">Preparing your briefing…</div>
+        </div>
+        <div class="briefing-foot" id="briefingFoot"></div>
+      </article>
+    </section>
+
+    <!-- ===== CHAT VIEW ===== -->
+    <section class="view hidden" id="view-chat">
+      <div class="chat-layout">
+        <!-- chat list sidebar -->
+        <div class="chat-list">
+          <button class="new-chat" id="newChat">＋ New chat</button>
+          <input id="chatSearch" class="chat-search" type="search" placeholder="Search all chats…" autocomplete="off">
+          <div class="chat-list-scroll" id="chatList"></div>
+        </div>
+        <!-- active conversation -->
+        <div class="chat-main">
+          <div class="chat-scroll" id="chatScroll"></div>
+          <div class="mode-row">
+            <div class="skill-picker" id="skillPicker">
+              <button type="button" class="skill-picker-btn" id="skillPickerBtn">
+                <span class="skill-picker-ico">✨</span>
+                <span id="skillPickerLabel">Skills</span>
+                <span class="model-picker-caret">▾</span>
+              </button>
+              <div class="skill-menu hidden" id="skillMenu"></div>
+            </div>
+            <div class="model-picker" id="modelPicker">
+              <button type="button" class="model-picker-btn" id="modelPickerBtn">
+                <span id="modelPickerLabel">Loading models…</span>
+                <span class="model-picker-caret">▾</span>
+              </button>
+              <div class="model-menu hidden" id="modelMenu"></div>
+            </div>
+          </div>
+          <form class="chat-form" id="chatForm">
+            <!-- everything below lives inside one bordered "composer" card now —
+                 quoted text, attachment thumbnails, the textarea, and the
+                 attach/send buttons — instead of each having its own separate
+                 box, to match a normal chat app's compose bar. The attachment
+                 strip and textarea are each height-capped with their own
+                 internal scrollbar so a big pile of attachments/text can never
+                 push the whole composer tall enough to cover the chat above. -->
+            <div class="composer-box">
+              <div class="quote-bar" id="chatQuote"></div>
+              <div class="img-preview" id="chatPreview"></div>
+              <div class="input-resizer" id="chatInputResizer" title="Drag to resize"></div>
+              <div class="composer-row">
+                <div class="attach-menu-wrap" id="chatAttachWrap">
+                  <button class="attach-btn" type="button" id="chatAttach" aria-label="Add files or photos" title="Add files or photos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                  <div class="attach-menu hidden" id="chatAttachMenu">
+                    <button type="button" class="attach-menu-item" id="chatAttachFilesItem">
+                      <span class="attach-menu-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></span> Add files or photos
+                    </button>
+                  </div>
+                </div>
+                <input id="chatFile" class="file-hidden" type="file" accept="image/*,application/pdf,.pdf,.docx,.xlsx,.csv,.txt,.md,audio/*,.mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm" multiple>
+                <textarea id="chatInput" class="chat-input" placeholder="Message Wendy… (Shift+Enter for new line)" autocomplete="off" rows="1"></textarea>
+                <button class="chat-send" type="submit">Send</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- artifact side panel: hidden until Wendy opens one -->
+        <div class="artifact-panel hidden" id="artifactPanel">
+          <div class="artifact-resizer" id="artifactResizer" title="Drag to resize"></div>
+          <div class="artifact-head">
+            <div class="artifact-titlewrap">
+              <span class="artifact-type-badge" id="artifactTypeBadge">Document</span>
+              <span class="artifact-title" id="artifactTitle">Untitled</span>
+            </div>
+            <button class="artifact-close" id="artifactClose" title="Close panel">×</button>
+          </div>
+          <textarea class="artifact-editor" id="artifactEditor" spellcheck="false"></textarea>
+          <div class="artifact-foot">
+            <span class="artifact-status" id="artifactStatus">Editable — changes stay in this panel</span>
+            <div class="artifact-actions">
+              <button class="artifact-btn" id="artifactCopy" title="Copy to clipboard">Copy</button>
+              <button class="artifact-btn" id="artifactDownload" title="Download as text/code">Download</button>
+              <button class="artifact-btn artifact-fmt" id="artifactDocx" title="Download as Word (.docx)">Word</button>
+              <button class="artifact-btn artifact-fmt" id="artifactPdf" title="Download as PDF">PDF</button>
+              <button class="artifact-btn artifact-fmt" id="artifactXlsx" title="Download as Excel (.xlsx)">Excel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ONGOING WORK VIEW ===== -->
+    <section class="view hidden" id="view-work">
+      <header class="page-head">
+        <div class="page-date">Background tasks</div>
+        <h1 class="page-title">Ongoing work</h1>
+        <p class="page-intro">Everything I'm running for you — recurring jobs,
+        one-off tasks, and anything scheduled for later.</p>
+        <div class="rule"></div>
+      </header>
+      <div class="work-todos" id="workTodos"></div>
+      <div class="work-list" id="workList"></div>
+    </section>
+
+    <!-- ===== CALENDAR VIEW ===== -->
+    <section class="view hidden" id="view-calendar">
+      <header class="page-head cal-head">
+        <div>
+          <div class="page-date">Schedule</div>
+          <h1 class="page-title" id="calMonth">Calendar</h1>
+        </div>
+        <div class="cal-nav">
+          <button id="calPrev" class="cal-btn">‹</button>
+          <button id="calToday" class="cal-btn cal-today-btn">Today</button>
+          <button id="calNext" class="cal-btn">›</button>
+        </div>
+      </header>
+      <div class="cal-weekdays">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </section>
+
+    <!-- ===== MEMORIES VIEW ===== -->
+    <section class="view hidden" id="view-memories">
+      <header class="page-head">
+        <div class="page-date">What Wendy knows</div>
+        <h1 class="page-title">Memories</h1>
+        <p class="page-intro">Facts, preferences, and standing instructions Wendy
+        remembers across every conversation. Add one yourself, or remove
+        anything she's picked up that you'd rather she forget.</p>
+        <div class="rule"></div>
+      </header>
+
+      <div class="data-tools">
+        <button class="data-export-btn" id="exportAllBtn" title="Download a full JSON backup of your memories, to-dos, and conversations">⬇ Export all my data</button>
+        <span class="data-tools-note">A JSON backup of your memories, to-dos, and every conversation — kept independent of the server.</span>
+      </div>
+
+      <form class="mem-add-form" id="memAddForm">
+        <input id="memInput" class="mem-input" type="text" placeholder="Add a memory — e.g. &quot;I prefer Python over C++&quot;" autocomplete="off">
+        <select id="memCategory" class="mem-category">
+          <option value="general">General</option>
+          <option value="profile">Profile</option>
+          <option value="preference">Preference</option>
+          <option value="project">Project</option>
+          <option value="task">Task</option>
+        </select>
+        <button class="mem-add-btn" type="submit">+ Add</button>
+      </form>
+
+      <div class="mem-list" id="memList"></div>
+    </section>
+
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
